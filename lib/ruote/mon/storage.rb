@@ -142,15 +142,14 @@ module Mon
       raise ArgumentError.new("can't delete doc without _rev") unless rev
 
       @session.with(safe: true) do |session|
-        r = session[doc['type']].remove(
+        r = session[doc['type']].find(
           { '_id' => doc['_id'], '_rev' => doc['_rev'] }
-        )
-      end
-
-      if r['n'] == 1
-        nil
-      else
-        from_mongo(collection(doc).find('_id' => doc['_id']).one || true)
+        ).remove_all
+        if r['n'] == 1
+          return nil
+        else
+          return from_mongo(collection(doc).find('_id' => doc['_id']).one || true)
+        end
       end
     end
 
@@ -181,7 +180,7 @@ module Mon
 
     def purge!
 
-      TYPES.each { |t| collection(t).remove }
+      TYPES.each { |t| collection(t).find.remove_all }
     end
 
     # Shuts this storage down.
@@ -209,7 +208,7 @@ module Mon
     #
     def purge_type!(type)
 
-      collection(type).remove
+      collection(type).find.remove_all
     end
 
     #--
@@ -306,7 +305,7 @@ module Mon
 
       # vertical tilde and ogonek to the rescue
 
-      # rekey(doc) { |k| k.to_s.gsub(/^\$/, 'ⸯ$').gsub(/\./, '˛') }
+      rekey(doc) { |k| k.to_s.gsub(/^\$/, 'ⸯ$').gsub(/\./, '˛') }
       doc
     end
 
@@ -315,7 +314,7 @@ module Mon
     #
     def from_mongo(docs)
 
-      # rekey(docs) { |k| k.gsub(/^ⸯ\$/, '$').gsub(/˛/, '.') }
+      rekey(docs) { |k| k.gsub(/^ⸯ\$/, '$').gsub(/˛/, '.') }
       docs
     end
 

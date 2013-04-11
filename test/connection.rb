@@ -6,6 +6,7 @@
 #
 
 require 'ruote-mon'
+require 'mongoid'
 
 
 def new_storage(opts)
@@ -20,9 +21,15 @@ def new_storage(opts)
     #
     # but it doesn't work.
 
-  con = Mongo::Connection.new(
-    '127.0.0.1', 27017, :pool_size => 14, :pool_timeout => 3)
+  # con = Mongo::Connection.new(
+  #   '127.0.0.1', 27017, :pool_size => 14, :pool_timeout => 3)
 
-  Ruote::Mon::Storage.new(con['ruote_mon_test'], opts)
+  # session = Moped::Session.new(["localhost:27017"])
+  # session.use "ruote_mon_test"
+  # Mongoid::Threaded.sessions[:default] = session
+  Ruote::Mon::Storage.new(
+    Moped::Session.new([ "localhost:27017" ], database: "ruote_mon_test"),
+    opts
+  )
 end
 
