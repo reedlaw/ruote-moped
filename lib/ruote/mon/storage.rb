@@ -109,17 +109,16 @@ module Mon
 
       r = begin
         @session.with(safe: true) do |session|
-          d =  session[doc['type']].find({ '_id' => doc['_id'], '_rev' => original['_rev'] })
-          if original['_rev'].nil?
-            d.upsert(to_mongo(opts[:update_rev] ? Ruote.fulldup(doc) : doc))
-          else
-            d.update(to_mongo(opts[:update_rev] ? Ruote.fulldup(doc) : doc))
-          end
+          collection(doc).find({ '_id' => doc['_id'], '_rev' => original['_rev'] }).
+            update(to_mongo(opts[:update_rev] ? Ruote.fulldup(doc) : doc),
+                   upsert: original['_rev'].nil?)
         end
-      rescue
+        @session.command(getLastError: 1)
+      rescue Moped::Errors::MongoError
         false
       end
 
+      binding.pry
       if r && (r['updatedExisting'] || original['_rev'].nil?)
         original.merge!(
           '_rev' => doc['_rev'], 'put_at' => doc['put_at']
@@ -306,7 +305,6 @@ module Mon
       # vertical tilde and ogonek to the rescue
 
       rekey(doc) { |k| k.to_s.gsub(/^\$/, 'ⸯ$').gsub(/\./, '˛') }
-      doc
     end
 
     # Prepare the doc for consumption out of MongoDB (takes care of keys
@@ -315,7 +313,6 @@ module Mon
     def from_mongo(docs)
 
       rekey(docs) { |k| k.gsub(/^ⸯ\$/, '$').gsub(/˛/, '.') }
-      docs
     end
 
     # rekeys hashes and sub-hashes. Simpler than Ruote.deep_mutate
