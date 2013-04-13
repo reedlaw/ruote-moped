@@ -3,20 +3,18 @@
 
 A MongoDB storage for ruote.
 
-This is the 'official' storage. There is also: https://github.com/PlasticLizard/ruote-mongodb but it contains optimizations for Plastic Lizard's team.
-
-Works best with a 1.9.x Ruby.
+This is the not the 'official' storage. The official one is at: https://github.com/jmettraux/ruote-mon
 
 
 == usage
 
   require 'ruote'
-  require 'ruote-mon'
+  require 'ruote-moped'
 
   ruote = Ruote::Dashboard.new(
     Ruote::Worker.new(
-      Ruote::Mon::Storage.new(
-        Mongo::Connection.new()['ruote_mon_test'],
+      Ruote::Moped::Storage.new(
+        Moped::Session.new([ 'localhost:27017' ], database: 'ruote_moped_x'),
         {})))
 
   # ...
@@ -24,25 +22,32 @@ Works best with a 1.9.x Ruby.
 
 == running tests
 
-assuming you have
+assuming you have checked out
 
   ruote/
-  ruote-mon/
+  ruote-moped/
 
-start your MongoDB server and then
+Get into ruote/ and make sure to add
+
+  gem 'mongoid'
+
+to the Gemfile in there (run "bundle install").
+
+Make sure your MongoDB server is running then
 
 
-* unit tests :
+* basic storage tests :
 
-get into ruote/ and do
+do
 
-  ruby test/unit/storage.rb -- --mon
+  RUOTE_STORAGE=moped bundle exec ruby test/functional/storage.rb
+
 
 * functional tests :
 
 get into ruote/ and do
 
-  ruby test/functional/test.rb -- --mon
+  RUOTE_STORAGE=moped bundle exec ruby test/functional/test.rb
 
 
 == license
@@ -53,11 +58,10 @@ MIT
 == links
 
 * http://ruote.rubyforge.org/
-* http://github.com/jmettraux/ruote-mon
+* http://github.com/reedlaw/ruote-moped
 
 
 == feedback
 
 mailing list : http://groups.google.com/group/openwferu-users
-irc : irc.freenode.net #ruote
 
